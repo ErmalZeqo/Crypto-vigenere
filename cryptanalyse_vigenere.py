@@ -1,32 +1,88 @@
 # Sorbonne Université 3I024 2024-2025
 # TME 2 : Cryptanalyse du chiffre de Vigenere
 #
-# Etudiant.e 1 : NOM ET NUMERO D'ETUDIANT
-# Etudiant.e 2 : NOM ET NUMERO D'ETUDIANT
+# Etudiant.e 1 : ZEQO Ermal 21315866
+# Etudiant.e 2 : FERROKH Mohamed Nassim 21308499
 
 import sys, getopt, string, math
 
 # Alphabet français
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-# Fréquence moyenne des lettres en français
-# À modifier
-freq_FR = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+def calc_freq(nom_fichier: str) -> list[float]:
+    """Calcule les fréquences des 26 lettres (A..Z) dans un fichier texte."""
+    with open(nom_fichier, "r", encoding="latin-1") as f:
+        txt = f.read().upper()
 
-# Chiffrement César
-def chiffre_cesar(txt, key):
-    """
-    Documentation à écrire
-    """
-    return txt
+    counts = [0] * 26
+    n = 0
+    for c in txt:
+        if 'A' <= c <= 'Z':
+            counts[ord(c) - ord('A')] += 1
+            n += 1
 
-# Déchiffrement César
-def dechiffre_cesar(txt, key):
-    """
-    Documentation à écrire
-    """
-    return txt
+    if n == 0:
+        return [0.0] * 26
 
+    return [x / n for x in counts]
+
+# Exo 1 : variable globale
+freq_FR = calc_freq("germinal.txt")
+
+
+#Test de frequence_lettres
+#print(freq_FR)
+
+def chiffre_cesar(message:str, n:int)->str:
+    ''' 
+    Retourne le message chiffre
+    avec un decalage de n lettres
+    '''
+    message_chiffre:str=''
+    position_A:int=ord('A') #65 en ASCII
+    lettre_decalee:str
+
+    #Chiffrement lettre par lettre du message
+    lettre:str
+    for lettre in message:
+        lettre_decalee = chr( ((ord(lettre) - position_A + n)%26) + position_A )
+        message_chiffre+= lettre_decalee
+    
+    return message_chiffre
+
+#Test de chiffre_cesar
+
+'''
+print("Test chiffre_cesar")
+assert chiffre_cesar("ALICE",0) == "ALICE"
+assert chiffre_cesar("ALICE",3) == "DOLFH"
+print("Test chiffre_cesar : OK")
+'''
+
+def dechiffre_cesar(message:str, n:int)->str:
+    ''' 
+    Retourne le message dechiffre 
+    avec un decalage de n lettres
+    '''
+    message_dechiffre:str=''
+    position_A:int=ord('A') #65 en ASCII
+    lettre_decalee:str
+
+    #Dechiffrement lettre par lettre du message
+    lettre:str
+    for lettre in message:
+        lettre_decalee = chr( ((ord(lettre)- position_A - n)%26) + position_A )
+        message_dechiffre+= lettre_decalee
+    
+    return message_dechiffre
+
+#Test de dechiffre_cesar
+'''
+print("Test dechiffre_cesar")
+assert dechiffre_cesar("ALICE",0) == "ALICE"
+assert dechiffre_cesar("ALICE",23) == "DOLFH"
+print("Test dechiffre_cesar : OK")
+'''
 # Chiffrement Vigenere
 def chiffre_vigenere(txt, key):
     """
