@@ -2,7 +2,7 @@
 # TME 2 : Cryptanalyse du chiffre de Vigenere
 #
 # Etudiant.e 1 : ZEQO Ermal 21315866
-# Etudiant.e 2 : FERROKH Mohamed Nassim 21308499
+# Etudiant.e 2 : FERROUKH Mohamed Nassim 21308499
 
 import sys, getopt, string, math
 
@@ -86,46 +86,152 @@ print("Test dechiffre_cesar : OK")
 # Chiffrement Vigenere
 def chiffre_vigenere(txt, key):
     """
-    Documentation à écrire
+    Chiffre un texte (A..Z) avec le chiffrement de Vigenère.
+
+    Paramètres
+    ----------
+    txt : str
+        Texte en majuscules, composé uniquement de lettres A..Z.
+    key : list[int]
+        Clé de Vigenère : liste d'entiers entre 0 et 25.
+        La clé est répétée si txt est plus long.
+
+    Retour
+    ------
+    str : le texte chiffré.
     """
-    return txt
+    position_A = ord('A')
+    res = ""
+
+    for i, lettre in enumerate(txt):
+        k = key[i % len(key)]
+        x = ord(lettre) - position_A          # A->0, B->1, ..., Z->25
+        y = (x + k) % 26                      # décalage modulo 26
+        res += chr(y + position_A)            # retour vers une lettre
+
+    return res
 
 # Déchiffrement Vigenere
 def dechiffre_vigenere(txt, key):
     """
-    Documentation à écrire
+    Déchiffre un texte (A..Z) avec le chiffrement de Vigenère.
+
+    Paramètres
+    ----------
+    txt : str
+        Texte chiffré en majuscules (A..Z).
+    key : list[int]
+        Clé de Vigenère : liste d'entiers entre 0 et 25.
+
+    Retour
+    ------
+    str : le texte déchiffré.
     """
-    return txt
+    position_A = ord('A')
+    res = ""
+
+    for i, lettre in enumerate(txt):
+        k = key[i % len(key)]
+        y = ord(lettre) - position_A      # lettre chiffrée -> 0..25
+        x = (y - k) % 26                 # on SOUSTRAIT la clé
+        res += chr(x + position_A)       # retour vers lettre
+
+    return res
 
 # Analyse de fréquences
 def freq(txt):
     """
-    Documentation à écrire
+    Calcule le nombre d'occurrences de chaque lettre (A..Z)
+    dans un texte donné.
+
+    Retourne une liste de 26 entiers.
     """
-    hist=[0.0]*len(alphabet)
+    hist = [0] * len(alphabet)   # 26 cases, toutes à 0
+
+    for lettre in txt:
+        if 'A' <= lettre <= 'Z':                 # on garde seulement les majuscules
+            indice = ord(lettre) - ord('A')      # A->0, B->1, ..., Z->25
+            hist[indice] += 1                    # on ajoute 1 occurrence
+
     return hist
 
 # Renvoie l'indice dans l'alphabet
 # de la lettre la plus fréquente d'un texte
 def lettre_freq_max(txt):
     """
-    Documentation à écrire
+    Renvoie l'indice (0..25) de la lettre la plus fréquente dans txt.
+    En cas d'égalité, on renvoie la lettre la plus petite alphabétiquement.
     """
-    return 0
+    hist = freq(txt)  # liste de 26 entiers
+
+    indice_max = 0
+    for i in range(1, len(hist)):
+        if hist[i] > hist[indice_max]:
+            indice_max = i
+
+    return indice_max
 
 # indice de coïncidence
 def indice_coincidence(hist):
     """
-    Documentation à écrire
+    Calcule l'indice de coïncidence d'un texte
+    à partir de son histogramme de fréquences.
+
+    hist : liste de 26 entiers (occurrences des lettres)
+
+    Retour : float
     """
-    return 0.0
+    n = sum(hist)  # nombre total de lettres
+
+    if n <= 1:
+        return 0.0
+
+    num = 0
+    for ni in hist:
+        num += ni * (ni - 1)
+
+    den = n * (n - 1)
+
+    return num / den
 
 # Recherche la longueur de la clé
 def longueur_clef(cipher):
     """
-    Documentation à écrire
+    Estime la longueur de la clé de Vigenère (<= 20) par l'indice de coïncidence.
+    On teste k=1..20, on découpe en k colonnes, on calcule l'IC de chaque colonne,
+    puis on prend la moyenne. On renvoie le premier k tel que moyenne > 0.06.
     """
-    return 0
+    # Petit garde-fou : si texte trop court, on ne peut rien conclure
+    if len(cipher) < 2:
+        return 0
+
+    meilleur_k = 0
+    meilleur_score = -1.0
+
+    for k in range(1, 21):  # clé supposée de longueur au plus 20
+        colonnes = [""] * k
+
+        # Découpage en colonnes : la lettre i va dans la colonne (i mod k)
+        for i, c in enumerate(cipher):
+            colonnes[i % k] += c
+
+        # IC moyen des colonnes
+        total_ic = 0.0
+        for col in colonnes:
+            total_ic += indice_coincidence(freq(col))
+        ic_moyen = total_ic / k
+
+        # On garde le meilleur au cas où aucun k ne dépasse 0.06
+        if ic_moyen > meilleur_score:
+            meilleur_score = ic_moyen
+            meilleur_k = k
+
+        # Critère demandé dans le sujet
+        if ic_moyen > 0.06:
+            return k
+
+    # Si aucun k ne passe le seuil, on renvoie le meilleur candidat
+    return meilleur_k
     
 # Renvoie le tableau des décalages probables étant
 # donné la longueur de la clé
@@ -133,9 +239,26 @@ def longueur_clef(cipher):
 # de chaque colonne
 def clef_par_decalages(cipher, key_length):
     """
-    Documentation à écrire
+    Renvoie la clé (liste d'entiers) estimée en supposant que,
+    dans chaque colonne, la lettre la plus fréquente correspond à E.
     """
-    decalages=[0]*key_length
+    decalages = [0] * key_length
+    indice_E = ord('E') - ord('A')  # 4
+
+    # 1) construire les colonnes
+    colonnes = [""] * key_length
+    for i, c in enumerate(cipher):
+        colonnes[i % key_length] += c
+
+    # 2) pour chaque colonne, trouver la lettre la plus fréquente
+    for j, col in enumerate(colonnes):
+        if len(col) == 0:
+            decalages[j] = 0
+            continue
+
+        idx_max = lettre_freq_max(col)              # index 0..25
+        decalages[j] = (idx_max - indice_E) % 26    # k = (max - E) mod 26
+
     return decalages
 
 # Cryptanalyse V1 avec décalages par frequence max
