@@ -264,9 +264,14 @@ def clef_par_decalages(cipher, key_length):
 # Cryptanalyse V1 avec décalages par frequence max
 def cryptanalyse_v1(cipher):
     """
-    Documentation à écrire
+    Devine la longueur de clé (indice de coïncidence), 
+    estime la clé en supposant que la lettre la plus fréquente correspond à 'E', 
+    puis déchiffre le texte.
     """
-    return "TODO"
+    
+    key_length = longueur_clef(cipher)
+    key = clef_par_decalages(cipher, key_length)
+    return dechiffre_vigenere(cipher, key)
 
 
 ################################################################
@@ -278,9 +283,19 @@ def cryptanalyse_v1(cipher):
 # Indice de coincidence mutuelle avec décalage
 def indice_coincidence_mutuelle(h1,h2,d):
     """
-    Documentation à écrire
+    Calcule l’indice de coïncidence mutuelle entre deux histogrammes en décalant h2 de d (mod 26) ; 
+    plus la valeur est grande, plus le décalage est probable.    
     """
-    return 0.0
+    n1 = sum(h1)
+    n2 = sum(h2)
+    if n1 == 0 or n2 == 0:
+        return 0.0
+
+    s = 0
+    for i in range(26):
+        s += h1[i] * h2[(i + d) % 26]
+
+    return s / (n1 * n2)
 
 # Renvoie le tableau des décalages probables étant
 # donné la longueur de la clé
@@ -288,18 +303,68 @@ def indice_coincidence_mutuelle(h1,h2,d):
 # à la première colonne
 def tableau_decalages_ICM(cipher, key_length):
     """
-    Documentation à écrire
+    Pour chaque colonne j, trouve le décalage d (0..25) qui maximise l’ICM avec la colonne 0 (référence). 
+    Renvoie la liste des décalages, avec decalages[0]=0.
     """
-    decalages=[0]*key_length
+    # Construire les colonnes
+    colonnes = [""] * key_length
+    for i, c in enumerate(cipher):
+        if 'A' <= c <= 'Z':
+            colonnes[i % key_length] += c
+
+    # Histogramme de référence (colonne 0)
+    h0 = freq(colonnes[0])
+
+    decalages = [0] * key_length
+    decalages[0] = 0
+
+    # Pour chaque colonne j, chercher le d qui maximise l'ICM
+    for j in range(1, key_length):
+        hj = freq(colonnes[j])
+
+        best_d = 0
+        best_score = -1.0
+        for d in range(26):
+            score = indice_coincidence_mutuelle(h0, hj, d)
+            if score > best_score:
+                best_score = score
+                best_d = d
+
+        decalages[j] = best_d
+
     return decalages
 
 # Cryptanalyse V2 avec décalages par ICM
 def cryptanalyse_v2(cipher):
-    """
-    Documentation à écrire
-    """
-    return "TODO"
+    '''Estime la longueur de clé, calcule les décalages relatifs par ICM, aligne les colonnes puis déchiffre comme un César en supposant que la lettre la plus fréquente correspond à E.'''
+    k = longueur_clef(cipher)
+    if k <= 0:
+        return ""
 
+    # d[j] ≈ key[j] - key[0] (mod 26)
+    d = tableau_decalages_ICM(cipher, k)
+
+    # 1) Aligner toutes les colonnes sur la colonne 0 :
+    #    on enlève d[j] à chaque lettre de la colonne j
+    aligne = ""
+    pos = 0
+    
+    for c in cipher:
+        if 'A' <= c <= 'Z':
+            j = pos % k
+            aligne += dechiffre_cesar(c, d[j])
+            pos += 1
+        else:
+            # normalement cipher est déjà filtré, mais on garde au cas où
+            aligne += c
+
+    # 2) Maintenant aligne est un César de décalage key[0]
+    idx_max = lettre_freq_max(aligne)
+    idx_E = ord('E') - ord('A')
+    decal_cesar = (idx_max - idx_E) % 26
+
+    # 3) Déchiffrement final
+    return dechiffre_cesar(aligne, decal_cesar)
 
 ################################################################
 
@@ -330,6 +395,7 @@ def cryptanalyse_v3(cipher):
     """
     Documentation à écrire
     """
+    
     return "TODO"
 
 
