@@ -264,8 +264,6 @@ Pour exécuter les tests, adaptez les commandes à l'organisation réelle de vot
 * Remarques
 
 - Le projet a été développé en *Python*.
-- La documentation et les commentaires dans le code sont importants pour expliquer
-  les choix d'implémentation.
 - Le projet a été réalisé en binôme dans le cadre universitaire.
 
 * Mots-clés
