@@ -5,15 +5,15 @@
 # Etudiant.e 2 : FERROUKH Mohamed Nassim 21308499
 
 import sys, getopt, string, math
-
+import unicodedata
 # Alphabet français
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 def calc_freq(nom_fichier: str) -> list[float]:
     """Calcule les fréquences des 26 lettres (A..Z) dans un fichier texte."""
     with open(nom_fichier, "r", encoding="latin-1") as f:
-        txt = f.read().upper()
-
+        raw = f.read().upper()
+    txt = unicodedata.normalize("NFD", raw)
     counts = [0] * 26
     n = 0
     for c in txt:
@@ -29,9 +29,6 @@ def calc_freq(nom_fichier: str) -> list[float]:
 # Exo 1 : variable globale
 freq_FR = calc_freq("germinal.txt")
 
-
-#Test de frequence_lettres
-#print(freq_FR)
 
 def chiffre_cesar(message:str, n:int)->str:
     ''' 
@@ -50,14 +47,6 @@ def chiffre_cesar(message:str, n:int)->str:
     
     return message_chiffre
 
-#Test de chiffre_cesar
-
-'''
-print("Test chiffre_cesar")
-assert chiffre_cesar("ALICE",0) == "ALICE"
-assert chiffre_cesar("ALICE",3) == "DOLFH"
-print("Test chiffre_cesar : OK")
-'''
 
 def dechiffre_cesar(message:str, n:int)->str:
     ''' 
@@ -76,13 +65,7 @@ def dechiffre_cesar(message:str, n:int)->str:
     
     return message_dechiffre
 
-#Test de dechiffre_cesar
-'''
-print("Test dechiffre_cesar")
-assert dechiffre_cesar("ALICE",0) == "ALICE"
-assert dechiffre_cesar("ALICE",23) == "DOLFH"
-print("Test dechiffre_cesar : OK")
-'''
+
 # Chiffrement Vigenere
 def chiffre_vigenere(txt, key):
     """
@@ -374,29 +357,101 @@ def cryptanalyse_v2(cipher):
 
 # Prend deux listes de même taille et
 # calcule la correlation lineaire de Pearson
-def correlation(L1,L2):
+def correlation(L1, L2):
     """
-    Documentation à écrire
+    Calcule la corrélation linéaire de Pearson entre deux listes de même longueur.
+
+    Retourne une valeur entre -1 et 1 (en pratique).
+    Si la variance de L1 ou L2 est nulle, renvoie 0.0.
     """
-    return 0.0
+    n = len(L1)
+    if n == 0 or n != len(L2):
+        return 0.0
+
+    # moyennes
+    m1 = sum(L1) / n
+    m2 = sum(L2) / n
+
+    num = 0.0
+    s1 = 0.0
+    s2 = 0.0
+
+    for x, y in zip(L1, L2):
+        dx = x - m1
+        dy = y - m2
+        num += dx * dy
+        s1 += dx * dx
+        s2 += dy * dy
+
+    den = math.sqrt(s1) * math.sqrt(s2)
+    if den == 0.0:
+        return 0.0
+
+    result = num / den
+
+    # Correction des erreurs d'arrondi
+    if abs(result - 1.0) < 1e-12:
+        return 1.0
+    if abs(result + 1.0) < 1e-12:
+        return -1.0
+
+    return result
 
 # Renvoie la meilleur clé possible par correlation
 # étant donné une longueur de clé fixée
 def clef_correlations(cipher, key_length):
-    """
-    Documentation à écrire
-    """
-    key=[0]*key_length
-    score = 0.0
-    return (score, key)
+    colonnes = [""] * key_length
+    for i, c in enumerate(cipher):
+        colonnes[i % key_length] += c
+
+    key = [0] * key_length
+    somme_scores = 0.0
+
+    for j, col in enumerate(colonnes):
+        hist = freq(col)
+
+        meilleur_score = -2.0
+        meilleur_d = 0  # ici d = décalage "pour réaligner" (inverse)
+
+        for d in range(26):
+            # rotation "inverse" simule le déchiffrement de la colonne
+            hist_corrige = [0] * 26
+            for i2 in range(26):
+                hist_corrige[i2] = hist[(i2 - d) % 26]
+
+            sc = correlation(hist_corrige, freq_FR)
+            if sc > meilleur_score:
+                meilleur_score = sc
+                meilleur_d = d
+
+        # conversion vers la clé attendue par le TP : k = -d mod 26
+        key[j] = (-meilleur_d) % 26
+        somme_scores += meilleur_score
+
+    return (somme_scores / key_length, key)
 
 # Cryptanalyse V3 avec correlations
 def cryptanalyse_v3(cipher):
     """
-    Documentation à écrire
+    Cryptanalyse V3 par corrélations :
+    - teste toutes les tailles de clé de 1 à 20
+    - pour chaque taille k, calcule (score, key) avec clef_correlations
+    - choisit la taille dont le score moyen est maximal
+    - déchiffre avec dechiffre_vigenere
     """
-    
-    return "TODO"
+    meilleur_score = -2.0
+    meilleure_clef = [0]
+    meilleure_taille = 1
+
+    for k in range(1, 21):  # clé supposée de taille <= 20
+        score_k, key_k = clef_correlations(cipher, k)
+        if score_k > meilleur_score:
+            meilleur_score = score_k
+            meilleure_clef = key_k
+            meilleure_taille = k
+
+    # Déchiffrement final avec la meilleure clé trouvée
+    return dechiffre_vigenere(cipher, meilleure_clef)
 
 
 ################################################################
