@@ -1,177 +1,274 @@
-#+title: README
-#+date: <2025-02-03 mar.>
-#+author: Maxime Roméas
-#+language: fr
-#+select_tags: export
-#+exclude_tags: noexport
-#+creator: Emacs 26.3 (Org mode 9.4)
+#+TITLE: Crypto-vigenere
+#+AUTHOR: ZEQO Ermal (21315866) & FERROUKH Mohamed Nassim (21308499) \\
 
-* Utilisation de GitLab
+* Auteurs
 
-  /Cette section et les suivantes concernant GitLab sont largement inspirées des documents d’Antoine Miné pour le cours 3I002./
+- *FERROUKH Mohamed Nassim* — 21308499
+- *ZEQO Ermal* — 21315866
 
-  Pour les TME, vous allez utiliser le logiciel =git= et la plateforme GitLab. Gitlab est un gestionnaire de projets logiciels. =git= est un gestionnaire de versions distribué. GitLab centralise votre projet sur un serveur externe. Il vous permet de garder un historique des modifications (visible avec une interface web), de vous synchroniser avec votre éventuel binôme et de faire le rendu du projet au chargé de TME. Nous y avons ajouté une fonction d’intégration continue : toute propagation des modifications locales vers le serveur GitLab exécutera automatiquement une batterie de tests pour valider votre nouvelle version.
+* Présentation
 
-  Pour mettre en place le projet GitLab des TME, vous devrez suivre les étapes suivantes. Faites attention à bien suivre les étapes dans l'ordre. Addressez-vous au chargé de TME en cas de problème.
+Ce projet a été réalisé dans le cadre du TME *Cryptanalyse du chiffrement de Vigenère*.
+L'objectif est d'implémenter en Python plusieurs outils permettant de cryptanalyser
+un texte chiffré avec le chiffre de Vigenère, de retrouver sa clé, puis de déchiffrer
+le message.
 
-  
-** Vérification de la place disponible (quota)
+Le projet s'inscrit dans l'UE d'introduction à la cryptologie et repose sur une approche
+progressive : on commence par les bases du chiffrement et du déchiffrement, puis on met
+en place plusieurs méthodes de cryptanalyse de plus en plus efficaces.
 
-   Si une des étapes ci-dessous échoue, cela peut être dû à un manque d’espace sur votre compte. Avant toutes choses, utilisez la commande =quota= dans un terminal pour déterminer si votre compte dispose d’espace disponible. En particulier, si la première colonne (=blocks=) est égale à la colonne (=limit=) et une étoile (=*=) apparaît, il ne reste plus de place sur le disque ; vous devez absolument libérer de l’espace avant de continuer.
+* Objectifs du projet
 
-** Connexion au GitLab
+Le projet vise à :
 
-   Normalement, vous avez du recevoir un email du serveur vous précisant les informations de connexion. Si vous n’avez pas reçu cet email, prévenez les enseignants. Ne vous inscrivez pas directement sur le serveur, vous n’aurez pas alors automatiquement accès aux projets des TME du cours.
+- implémenter le chiffrement et le déchiffrement de César ;
+- implémenter le chiffrement et le déchiffrement de Vigenère ;
+- analyser les fréquences des lettres dans un texte ;
+- déterminer la longueur probable d'une clé de Vigenère ;
+- reconstruire la clé utilisée ;
+- déchiffrer automatiquement un texte chiffré.
 
-   Votre /username/ pour la connexion est votre numéro d’étudiant. Lors de votre première connexion, vous devrez choisir un mot de passe.
+À la fin du projet, le programme doit être capable de casser la plupart des messages
+chiffrés avec Vigenère.
 
-** Configuration du proxy de navigation (valable uniquement à la PPTI)
+* Méthodes étudiées
 
-   Si la page web du serveur GitLab n’est pas accessible, vous devez configurer le proxy (serveur mandataire) de votre navigateur. Choisissez, pour les protocoles HTTP et HTTPS, le serveur =proxy.ufr-info-p6.jussieu.fr= et le numéro de port 3128.
+** 1. Approche par indice de coïncidence
 
-** Configuration du proxy pour =git= (valable uniquement à la PPTI)
+Cette première méthode consiste à :
 
-   Afin d'éviter les erreurs d'authentification, vous devez ouvrir un terminal et y taper les commandes suivantes :
+- découper le texte chiffré en colonnes selon une taille de clé supposée ;
+- calculer l'indice de coïncidence de chaque colonne ;
+- repérer une longueur de clé plausible ;
+- déduire les décalages en supposant que la lettre la plus fréquente correspond au =E=.
 
-   #+begin_src shell
-     git config --global http.sslVerify false
-     git config --global http.proxy http://proxy.ufr-info-p6.jussieu.fr:3128
-     git config --global https.proxy https://proxy.ufr-info-p6.jussieu.fr:3128
-   #+end_src
-   
-   
-** Configuration des notifications de GitLab
+** 2. Approche par indice de coïncidence mutuelle
 
-   Il peut être utile de réduire les notifications envoyées par email. Pour cela, dans le menu =Preferences= de GitLab, choisissez l’option =Notifications=, ouvrez le menu =Global notification level= et cliquez sur =Custom=. Une liste apparaît, et vous pouvez désélectionner certaines notifications. Nous conseillons en particulier de désélectionner =Failed pipeline= pour éviter d’être submergé de notifications lors de l’intégration continue
+Cette seconde méthode compare les colonnes entre elles afin de retrouver leurs
+décalages relatifs par rapport à une colonne de référence. Une fois les colonnes
+alignées, le texte obtenu est traité comme un chiffrement de César.
 
-   
-** /Fork/ du squelette de projet GitLab
+** 3. Approche par corrélation de Pearson
 
-   Vous êtes automatiquement membre du groupe =CRYPTO-2026=. Ce groupe contient les projets pour chaque TME, auxquels vous pouvez accéder en lecture seule. Chaque projet est un squelette que vous allez compléter. Il fournit quelques sources : exemples, tests, interfaces, etc. Pour réaliser le TME et compléter ce projet, vous devez d’abord en faire *une copie* (fork) qui sera *privée* à votre binôme et vous et sur laquelle vous allez travailler.
-   
-*Note* : assurez-vous que votre fenêtre de navigateur occupe tout l’écran. Si la fenêtre est trop petite, certains menus de GitLab sont remplacés par des icônes, et vous ne trouverez plus les noms des menus tels qu’indiqués dans la suite de l’énoncé.
+La troisième méthode repose sur la corrélation entre les fréquences observées dans
+les colonnes du texte chiffré et les fréquences d'un texte français de référence.
+On choisit la taille de clé et les décalages qui maximisent cette corrélation.
 
-Pour chaque binôme, *un seul d’entre vous* devra faire un /fork/ de ce squelette de projet, puis y ajouter son camarade de binôme, et ainsi partager le projet sous GitLab. Pour cela :
+* Fonctionnalités principales
 
-  - Dans l’onglet =Projects > Your projects=, sélectionnez le projet =CRYPTO-2026/TME= (où =TME= correspond au nom du projet du TME en cours), cliquez sur le bouton =Fork= puis cliquez sur votre nom. Ceci crée le projet personnel privé nommé =username/TME= (où =username= est votre numéro d’étudiant). Vous travaillerez désormais dans ce projet, où vous avez les droits d’écriture.
-  - Dans l’onglet =Projects > Your projects=, sélectionnez ce projet privé. Il doit avoir pour nom =username/TME= et porter la mention =Forked from CRYPTO-2026/TME=. Cliquez sur =Project Information= dans le menu de gauche, puis =Members=. *Invitez votre binôme* en lui donnant pour rôle =Maintainer=.
+Le projet contient notamment des fonctions permettant de :
 
-    Si c’est votre binôme qui a créé le projet et vous y a ajouté avec les bons droits, vous devriez le trouver dans l’onglet =Projects > Your projects= sous le nom =partnername/TME= où =partnername= est le numéro d’étudiant de votre binôme.
+- calculer les fréquences des lettres d'un texte ;
+- trouver la lettre la plus fréquente ;
+- calculer l'indice de coïncidence ;
+- calculer l'indice de coïncidence mutuelle ;
+- déterminer une longueur de clé probable ;
+- retrouver la clé par décalages ;
+- calculer une clé à l'aide des corrélations ;
+- effectuer trois versions de cryptanalyse :
+  - =cryptanalyse_v1=
+  - =cryptanalyse_v2=
+  - =cryptanalyse_v3=
 
-** Ajout du chargé de TME à votre projet GitLab
+* Organisation du travail
 
-   Dans votre projet personnel sur GitLab, =username/TME=, invitez également votre chargé TME avec le rôle =Maintainer= (même procédure que ci-dessus). Si vous n’ajoutez pas votre chargé de TME, celui-ci ne pourra pas suivre l’avancement de votre travail, ni vous donner une note le cas échéant.
-   
-** Faire une copie locale de votre projet
+Le TME est conçu comme un projet incrémental. Les grandes étapes sont :
 
-   Pour travailler sur votre projet, vous devez effectuer une copie locale sur votre machine. Tous les membres du projet peuvent faire une copie locale. Ensuite, vous devez régulièrement synchroniser la version sur le serveur avec le travail que vous avez effectué localement. Cela vous permet à plusieurs personnes de travailler simultanément, sur des ordinateurs différents, et de partager et d’échanger les sources développées.
+1. mise en place du projet ;
+2. chiffrement et déchiffrement avec César et Vigenère ;
+3. cryptanalyse par indice de coïncidence ;
+4. cryptanalyse par indice de coïncidence mutuelle ;
+5. cryptanalyse par corrélation de Pearson.
 
-   Pour effectuer une copie locale de votre projet, vous devez d’abord récupérer l’adresse du projet. Vous la trouverez sur la page GitLab de votre projet, en cliquant sur l’icône =Clone= à côté du bouton =Fork=. Copiez la chaîne de caractères sous =Clone with HTTPS=.
+Chaque étape s'appuie sur la précédente.
 
-   *Prenez garde* à bien importer votre projet de binôme, =username/TME=, et pas =CRYPTO-2026/TME=. Vous ne pourrez pas travailler dans ce dernier, qui est en lecture seule.
 
-   Utilisez votre terminal pour vous rendre dans le repertoire où vous souhaitez copier le projet. Puis entrez la commande =git clone adresse-du-projet=, où =adresse-du-projet= est l’adresse que vous avez récupérée.
-   
-Vous devez entrer un nom d’utilisateur et le mot de passe associé. Le nom d’utilisateur est votre username sur le serveur GitLab, c’est-à-dire votre numéro d’étudiant (i.e., la personne qui fait l’import, pas forcément la personne qui a fait le /fork/) ; le mot de passe est celui que vous avez choisi en vous connectant au serveur GitLab la première fois.
+Exercice 1 — Calcul des fréquences de référence en français
 
-Cette action va créer un répertoire =TME= contenant votre copie locale du projet.
+But :
+Cet exercice sert à calculer la fréquence d’apparition des lettres de l’alphabet dans un texte français de référence.
+Le résultat est utilisé plus tard pour comparer un texte chiffré avec les statistiques du français.
 
-Ne modifiez pas les fichiers =test-*.py= qui servent de tests automatiques.
+Fonctions :
 
-Vous pouvez désormais commencer à travailler sur votre copie locale du projet.
+=calc_freq(nom_fichier)= : calcule les fréquences des lettres A à Z dans un fichier texte.
+=freq_FR= : variable globale contenant les fréquences du français calculées à partir de =germinal.txt=.
 
-** Synchronisation avec le serveur GitLab
+Exercice 2 — Chiffrement et déchiffrement de César
 
-   Après avoir exécuté =git clone= en début de TME, nous avons travaillé sur une copie locale du projet. Il est nécessaire de synchroniser périodiquement votre projet local avec le projet GitLab pour :
-   
-   - communiquer vos fichiers à l’enseignant pour le rendu (celui-ci a accès aux fichiers sous GitLab, mais pas à ceux sur votre compte local),
-   - vous synchroniser avec votre binôme,
-   - éventuellement synchroniser des copies locales sur plusieurs ordinateurs,
-   - garder une trace des modifications et pouvoir éventuellement revenir à une version précédente en cas d’erreur.
+But :
+L’objectif est d’implémenter le chiffre de César, c’est-à-dire un chiffrement par décalage fixe des lettres de l’alphabet.
+Cet exercice permet aussi de réutiliser César dans les étapes suivantes de cryptanalyse.
 
-   Les opérations utiles sont donc la propagation d’une copie locale vers le serveur (/push/) et depuis le serveur vers une copie locale (/pull/).
+Fonctions :
 
-Vous pouvez consulter l’état des fichiers sur le serveur GitLab en utilisant le site web [[https://stl.algo-prog.info]]. Vous y trouverez la dernière version des fichiers et l’historique des modifications. Vous pourrez en particulier vérifier que le projet a bien été synchronisé pour le rendu de TME.
+=chiffre_cesar(message, n)= : chiffre un message avec un décalage de =n= lettres.
+=dechiffre_cesar(message, n)= : déchiffre un message chiffré par César avec un décalage de =n= lettres.
 
-** =git= en ligne de commande
+Exercice 3 — Chiffrement et déchiffrement de Vigenère
 
-   Dans un terminal, placez-vous dans le répertoire =TME= contenant votre projet. Les commandes les plus utiles sont :
-   - =git status= pour connaître l’état actuel de vos fichiers, en particulier ce qui a été modifié depuis la dernière synchronisation avec le serveur ;
-   - =git add fichiers= pour indiquer les fichiers ajoutés ou modifiés localement ;
-   - =git commit -m "mon message"= pour enregistrer localement les ajouts ou modifications des fichiers spécifiés par =git add=, où /mon message/ est un commentaire de votre part qui spécifie les modifications ;
-   - =git push= pour effectivement propager l’enregistrement local vers le serveur ;
-   - =git pull= pour rapatrier localement les modifications depuis le serveur.
+But :
+Cet exercice consiste à implémenter le chiffrement de Vigenère, qui généralise César en utilisant une clé composée de plusieurs décalages.
+Chaque lettre du texte est décalée selon la position correspondante dans la clé.
 
-   Si c'est la première fois que vous utilisez =git=, il faudra lancer les commandes suivantes afin de renseigner votre nom et votre mail pour vos futurs commits :
-   #+begin_src shell
-          git config --global user.email "prenom.nom@toto.com"
-          git config --global user.name "Votre Nom"
-   #+end_src
+Fonctions :
 
-   Le système =git= est décrit dans le livre en ligne : [[https://git-scm.com/book/en/v2]].
+=chiffre_vigenere(txt, key)= : chiffre un texte avec une clé de Vigenère.
+=dechiffre_vigenere(txt, key)= : déchiffre un texte avec une clé de Vigenère.
 
-** Bonnes pratiques
+Exercice 4 — Analyse de fréquences
 
-   C’est une bonne idée d’anticiper les conflits en *commençant toute session de travail par un pull*, pour repartir avec les dernières versions des fichiers disponibles sur le serveur, et en *terminant toute session de travail par un push*, pour que vos modifications locales soient envoyées sur le serveur et puissent être importées par votre binôme ou vous-même sur un autre ordinateur.
+But :
+Le but est d’étudier la répartition des lettres dans un texte.
+Cette étape est indispensable pour identifier les lettres dominantes et préparer la cryptanalyse statistique.
 
-** Gestion des conflits
+Fonctions :
 
-   Si des modifications ont été faites sur le serveur (par exemple par une propagation, =push=, de votre camarade) depuis votre dernier =pull=, vous ne pourrez pas propager vos modifications locales directement ; =git= refusera avec une erreur.
+=freq(txt)= : calcule le nombre d’occurrences de chaque lettre dans un texte.
+=lettre_freq_max(txt)= : renvoie l’indice de la lettre la plus fréquente dans le texte.
 
-   En effet, cela provoquerait des conflits entre deux nouvelles versions d’un fichier. =git= vous force à résoudre les conflits localement, avant de propager vos fichiers corrigés vers le serveur :
+Exercice 5 — Calcul de l’indice de coïncidence
 
-   — Faites d’abord un =pull=.
-   — =git= s’efforce de fusionner les modifications locales avec celles présentes sur le serveur, mais il a pu faire des erreurs ; vous devez examiner chaque fichier et corriger à la main les problèmes causés par la fusion. Les zones non fusionnées sont identifiées par des balises =<<<<<<=, =------= et =>>>>>>= dans votre source Python. =git= vous indique de cette manière les deux versions disponibles (version locale et dernière version disponible sur le serveur). Il s’agit souvent de choisir une de deux versions, en supprimant les lignes redondantes et les balises.
-   — Après suppression de tous les conflits, vous devez faire un =commit= avec les fichiers concernés.
-   — Vous pouvez enfin faire un =push=.
+But :
+L’indice de coïncidence permet de mesurer la proximité statistique d’un texte avec une langue naturelle.
+Il est utilisé pour reconnaître si un sous-texte ressemble à un texte français.
 
-** Tests et intégration continue sous GitLab
+Fonction :
 
-   L’intégration continue est une pratique de développement logiciel consistant à s’assurer que, à chaque instant, le dépôt est correct et passe tous les tests. Le serveur GitLab est configuré pour l’intégration continue : *après chaque propagation de votre copie locale vers le serveur (push), des tests sont exécutés automatiquement.*
+=indice_coincidence(hist)= : calcule l’indice de coïncidence à partir d’un histogramme de fréquences.
 
-   Vous pouvez consulter le résultat des tests sur le serveur GitLab https://stl.algo-prog.info en cliquant sur votre projet, puis dans le menu à gauche sur =CI / CD > pipelines=. Les tests de la dernière version apparaissent en haut. Un icône « V » vert ou une croix rouge indique l’état du test (un croissant ou un symbole pause indique que le test est en cours ou en attente, il faut donc patienter). Cliquer sur l’icône dans la colonne =Status= permet de voir l’ensemble des classes de test. Cliquer sur un nom de test vous donne un rapport complet de test, indiquant en particulier quelles méthodes de test ont échoué, et avec quelles erreurs.
+Exercice 6 — Recherche de la longueur de la clé
 
-   Le chargé de TME a accès aux rapports de tests sur le serveur GitLab, ce qui lui permet d’évaluer votre rendu de TME.
+But :
+L’objectif est d’estimer la longueur probable de la clé de Vigenère.
+Pour cela, on découpe le texte en plusieurs colonnes selon une taille supposée, puis on calcule l’indice de coïncidence moyen de ces colonnes.
 
-   Le serveur est configuré pour exécuter tous les tests du TME. *Tant que vous n’avez pas programmé toutes les fonctions demandées, de nombreux tests vont échouer. Vous ignorerez donc au départ les tests liés aux questions que vous n’avez pas encore traitées.*
+Fonction :
 
-   Vous pouvez effectuer les tests au niveau local, avant de propager votre version du projet. Pour lancer les tests localement il suffit d’utiliser la commande =./test-all.sh=. Vous pouvez également executer chaque test séparément avec la commande =python test-N-*.py= où $N$ est le numéro du test que vous souhaitez effectuer.
+=longueur_clef(cipher)= : estime la longueur de la clé en testant les valeurs de 1 à 20.
 
-   *Nous vous recommandons d’effectuer les tests au niveau local avant de propager votre version du projet, afin de vous assurer qu’il ne reste pas d’erreurs.*
+Exercice 7 — Reconstruction de la clé par décalages
 
-** Rendu du TME
+But :
+Une fois la longueur de la clé trouvée, on cherche à retrouver chaque décalage de la clé.
+On suppose que la lettre la plus fréquente de chaque colonne correspond à la lettre =E= en français.
 
-   Compte tenu des conditions particulières d'enseignement ce semestre, nous vous demandons de rendre régulièrement votre travail afin que vos enseignants puissent suivre votre avancement. De plus, un des TME sera noté et comptera dans le contrôle continu, il sera impératif de soumettre votre travail afin que vous puissiez être évalués.
+Fonction :
 
-   Chaque semaine, il est obligatoire de rendre le TME à votre chargé de TME en fin de la séance. Si vous le souhaitez, vous pouvez aussi rendre *une seconde version améliorée avant le début du TME suivant.*
+=clef_par_decalages(cipher, key_length)= : calcule la clé probable en utilisant la lettre la plus fréquente de chaque colonne.
 
-   Le rendu se fait en propageant vos modifications vers le serveur GitLab, comme indiqué plus haut, et, idéalement, en y associant un /tag/ pour que vous et vos enseignants puissiez mieux vous y retrouver. Pour cela :
-   — Connectez-vous sur la page de votre projet sous https://stl.algo-prog.info.
-   — Assurez-vous que votre chargé de TME est membre de votre projet, avec le rôle =Maintainer=.
-   — Vérifiez que toutes les classes demandées sont bien présentes sous GitLab et bien synchronisées avec le projet local.
-   — Vérifiez également que les tests unitaires du TME lancés par l’intégration continue sur le serveur GitLab se sont exécutés correctement.
-   — Dans le menu de gauche, sélectionnez =Repository > Tags= et cliquez sur =New Tag=.
-   — Donnez un nom à votre /tag/ : « rendu-fin-seance1 » ou « rendu-apres-seance1 », selon qu’il s’agit d’un rendu partiel en fin de la séance 1 ou bien d’un rendu du TME plus tard dans la semaine.
-   — Cliquez sur =Create tag=.
-   — En cas d’erreur, il est toujours possible de créer un nouveau tag. Pensez à donner un nom explicite.
+Exercice 8 — Cryptanalyse V1
 
-   *Il est fortement recommandé de créer un tag pour chaque rendu, et de réaliser au moins un rendu par séance.*
+But :
+Cette première version de la cryptanalyse combine les étapes précédentes :
+on estime la longueur de la clé, on retrouve les décalages probables, puis on déchiffre le texte.
 
-** Mettre à jour sa version du TME
+Fonction :
 
-   Si un ou plusieurs fichiers du TME venaient à être modifiés (par exemple à cause de bugs dans le code ou les tests, ...) vous pourrez mettre à jour votre projet de TME sans perdre votre travail en effectuant les commandes suivantes.
+=cryptanalyse_v1(cipher)= : réalise la cryptanalyse de Vigenère avec la méthode simple basée sur la fréquence maximale.
 
-   Pour la première commande, qui suit, il n'est utile de la lancer qu'une seule fois. Vous n'aurez donc pas à la refaire à chaque modification du sujet de TME.
+Exercice 9 — Indice de coïncidence mutuelle
 
-   #+begin_src shell
-     # Seulement la première fois
-     git remote add upstream https://stl.algo-prog.info/crypto-2026/tme2-vigenere
-   #+end_src
+But :
+Le but est de comparer deux colonnes entre elles pour trouver leur décalage relatif.
+Cette méthode est plus robuste que celle basée uniquement sur la lettre la plus fréquente.
 
-   Pour les suivantes, elles devront être effectuées à chaque modification du sujet de TME.
+Fonction :
 
-   #+begin_src shell
-     # À chaque modification
-     git fetch upstream
-     git merge upstream/master -m "Merge upstream"
-   #+end_src
+=indice_coincidence_mutuelle(h1, h2, d)= : calcule l’indice de coïncidence mutuelle entre deux histogrammes avec un décalage =d=.
+
+Exercice 10 — Tableau des décalages par ICM
+
+But :
+Cet exercice cherche à déterminer les décalages relatifs entre toutes les colonnes du texte chiffré, en prenant la première colonne comme référence.
+
+Fonction :
+
+=tableau_decalages_ICM(cipher, key_length)= : renvoie le tableau des décalages probables entre les colonnes.
+
+Exercice 11 — Cryptanalyse V2
+
+But :
+Cette deuxième version de la cryptanalyse utilise l’indice de coïncidence mutuelle pour aligner les colonnes, puis considère le texte obtenu comme un chiffre de César global.
+On détermine enfin le dernier décalage pour obtenir le texte clair.
+
+Fonction :
+
+=cryptanalyse_v2(cipher)= : effectue la cryptanalyse en utilisant les décalages relatifs entre colonnes.
+
+Exercice 12 — Corrélation de Pearson
+
+But :
+Le but est de mesurer la similarité entre deux distributions de fréquences à l’aide de la corrélation linéaire de Pearson.
+Cette méthode permet de comparer les colonnes du texte chiffré avec les fréquences du français.
+
+Fonction :
+
+=correlation(L1, L2)= : calcule la corrélation de Pearson entre deux listes de même taille.
+
+Exercice 13 — Recherche de la meilleure clé par corrélation
+
+But :
+Pour une longueur de clé donnée, on cherche le décalage optimal de chaque colonne en maximisant la corrélation avec les fréquences du français.
+Cela permet d’obtenir une clé plus fiable.
+
+Fonction :
+
+=clef_correlations(cipher, key_length)= : calcule la meilleure clé possible par corrélation de Pearson.
+
+Exercice 14 — Cryptanalyse V3
+
+But :
+Cette dernière version teste toutes les tailles de clé possibles de 1 à 20.
+Pour chaque taille, elle calcule la clé associée par corrélation, garde celle qui obtient le meilleur score moyen, puis déchiffre le message.
+
+Fonction :
+
+=cryptanalyse_v3(cipher)= : réalise la cryptanalyse complète par corrélation.
+
+Fonctions utilitaires fournies
+
+But :
+Ces fonctions servent à lire les fichiers, lancer la version demandée de la cryptanalyse et gérer l’exécution en ligne de commande.
+
+Fonctions :
+
+=read(fichier)= : lit un fichier et renvoie son contenu.
+=cryptanalyse(fichier, version)= : exécute la version choisie de la cryptanalyse.
+=usage()= : affiche l’aide du programme.
+=main(argv)= : gère les arguments du programme et lance l’analyse.
+
+* Tests
+
+Le sujet prévoit une validation progressive à l'aide de plusieurs tests, notamment :
+
+- =test-1-cesar.py=
+- tests sur le chiffrement et déchiffrement de Vigenère
+- tests sur l'indice de coïncidence
+- tests sur les décalages
+- tests sur les différentes versions de cryptanalyse
+
+L'objectif final est de réussir l'ensemble des tests du projet.
+
+* Lancer le projet
+
+Exemple de commandes Git utiles :
+
+#+begin_src bash
+git clone https://github.com/ErmalZeqo/Crypto-vigenere.git
+cd Crypto-vigenere
+#+end_src
+
+Pour exécuter les tests, adaptez les commandes à l'organisation réelle de votre dépôt.
+
+* Remarques
+
+- Le projet a été développé en *Python*.
+- La documentation et les commentaires dans le code sont importants pour expliquer
+  les choix d'implémentation.
+- Le projet a été réalisé en binôme dans le cadre universitaire.
+
+* Mots-clés
+
+cryptologie, cryptanalyse, vigenere, cesar, python, indice de coïncidence,
+corrélation de Pearson, fréquence des lettres
